@@ -60,11 +60,10 @@ export default {
       selected_ids.forEach(id => params.append('ids', id))
 
       axios.delete("/api/disciplines?" + params.toString())
-          .then(request => {
-            request.status === 200 ? this.$router.push({name: "successPage"}) : console.log(request);
+          .then(response => {
+            response.status === 200 ? this.$router.push({name: "successPage"}) : console.log(response);
           }).catch(e => {
-        console.log(e)
-        this.$router.push({name: "serverErrorPage"})
+        e.response.status === 405 ? this.$router.push({name: "methodNotAllowed"}) : this.$router.push({name: "serverErrorPage"});
       })
 
     },

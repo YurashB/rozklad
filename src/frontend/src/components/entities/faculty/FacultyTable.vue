@@ -69,8 +69,7 @@ export default {
             request.status === 200 ? this.$router.push({name: "successPage"}) : console.log(request);
             request.status === 500 ? this.$router.push({name: "serverErrorPage"}) : console.log(request);
           }).catch(e => {
-        console.log(e)
-        this.$router.push({name: "serverErrorPage"})
+        e.response.status === 405 ? this.$router.push({name: "methodNotAllowed"}) : this.$router.push({name: "serverErrorPage"});
       })
     },
     changeItem() {

@@ -12,15 +12,17 @@
             :rules="nameRules"
             label="Name of faculty"
             type="text"
+            counter="128"
         >
         </v-text-field>
         <v-text-field
             class="text-field-m-p"
             variant="outlined"
             v-model="faculty.shortName"
-            :rules="nameRules"
+            :rules="shortNameRules"
             label="Short name of faculty"
             type="text"
+            counter="10"
         >
         </v-text-field>
         <v-btn
@@ -63,6 +65,11 @@ export default {
       valid: false,
       nameRules: [
         v => !!v || 'Name is required',
+        v => v.length <= 128 || 'Max characters entered'
+      ],
+      shortNameRules: [
+        v => !!v || 'Name is required',
+        v => v.length <= 10 || 'Max characters entered'
       ],
       headerTitle: this.$route.params.id ? "Change faculty" : "Add new faculty",
     }

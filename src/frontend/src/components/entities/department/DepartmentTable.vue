@@ -9,6 +9,7 @@
           :rows="rows"
           :select-options="{ enabled: true }"
           :search-options="{ enabled: true }"
+          :pagination-options="{ enabled: true }"
           ref="table"
       >
         <template #selected-row-actions>
@@ -36,6 +37,8 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: "DepartmentTable",
   data() {
@@ -47,45 +50,53 @@ export default {
         },
         {
           label: 'Short name',
-          field: 'short_name',
+          field: 'shortName',
         },
         {
           label: 'Faculty',
-          field: 'faculty',
+          field: 'faculty.shortName',
         },
       ],
-      rows: [
-        {id: 1, name: 'Department of Information Systems and Technologies', short_name: "IST", faculty: "FICT", faculty_id: 1},
-        {id: 2, name: 'Technical System of Automation and Control of Production', short_name: "ASOIU", faculty: "FICT", faculty_id: 1},
-        {id: 3, name: 'Department of computing technics', short_name: "OT", faculty: "FICT", faculty_id: 1},
-        {id: 4, name: 'Department of Applied Radio Electronics', short_name: "DARE", faculty: "RTF", faculty_id: 1},
-        {id: 5, name: 'Department of Radio Engineering', short_name: "DRE", faculty: "RTF", faculty_id: 1},
-        {id: 6, name: 'Department of Theory, Practice and Translation of English', short_name: "DTPTE", faculty: "FL", faculty_id: 1},
-        {id: 7, name: 'Department of Theory, Practice and Translation of French', short_name: "DTPTF", faculty: "FL", faculty_id: 1},
-      ],
+      rows: [],
     }
   },
   methods: {
     deleteItem() {
+      let selected_ids = Array.from(this.$refs['table'].selectedRows).map(item => item.id);
 
+      const params = new URLSearchParams();
+      selected_ids.forEach(id => params.append('ids', id))
+
+      axios.delete("/api/departments?" + params.toString())
+          .then(request => {
+            request.status === 200 ? this.$router.push({name: "successPage"}) : console.log(request);
+            request.status === 500 ? this.$router.push({name: "serverErrorPage"}) : console.log(request);
+          }).catch(e => {
+        console.log(e.response.status)
+        e.response.status === 405 ? this.$router.push({name: "methodNotAllowed"}) : this.$router.push({name: "serverErrorPage"});
+      })
     },
     changeItem() {
       let selected = this.$refs['table'].selectedRows[0];
       let id = selected.id;
-      let name = selected.name;
-      let short_name = selected.short_name;
-      let faculty_id = selected.faculty_id;
 
       this.$router.push({
         name: "updateDepartment",
         params: {id: id},
-        query: {id: id, name: name, short_name: short_name, faculty_id: faculty_id},
       })
     }
+  },
+  mounted() {
+    axios.get("/api/departments")
+        .then(response => {
+          this.rows = response.data;
+        })
+        .catch(e => {
+          console.log(e)
+          this.$router.push({name: "serverErrorPage"})
+        })
   }
 }
 </script>
 
-<style scoped>
 
-</style>

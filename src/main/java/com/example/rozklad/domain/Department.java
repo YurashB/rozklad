@@ -19,16 +19,17 @@ public class Department {
     @Column(name = "department_short_name", nullable = false)
     private String shortName;
 
-    @Column(name = "fk_faculty_id", nullable = false)
-    private Long facultyId;
+    @ManyToOne
+    @JoinColumn(name = "faculty_id")
+    private Faculty faculty;
 
     public Department() {
     }
 
-    public Department(String name, String shortName, Long faculty_id) {
+    public Department(String name, String shortName, Faculty faculty) {
         this.name = name;
         this.shortName = shortName;
-        this.facultyId = faculty_id;
+        this.faculty = faculty;
     }
 
     public Long getId() {
@@ -55,21 +56,11 @@ public class Department {
         this.shortName = shortName;
     }
 
-    public Long getFacultyId() {
-        return facultyId;
+    public Faculty getFaculty() {
+        return faculty;
     }
 
-    public void setFacultyId(Long facultyId) {
-        this.facultyId = facultyId;
-    }
-
-    @Override
-    public String toString() {
-        return "DepartmentController{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", shortName='" + shortName + '\'' +
-                ", faculty_id=" + facultyId +
-                '}';
+    public void setFaculty(Faculty faculty) {
+        this.faculty = faculty;
     }
 }

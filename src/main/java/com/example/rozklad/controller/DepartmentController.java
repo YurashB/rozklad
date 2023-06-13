@@ -4,6 +4,7 @@ import com.example.rozklad.domain.Department;
 import com.example.rozklad.exception.EntityNotFoundException;
 import com.example.rozklad.repository.DepartmentRepository;
 import com.example.rozklad.service.department.DepartmentService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -76,8 +77,9 @@ public class DepartmentController {
         try {
             repository.deleteAllById(Arrays.asList(ids));
             return new ResponseEntity<>(HttpStatus.OK);
+        } catch (DataIntegrityViolationException e) {
+            return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
         } catch (Exception e) {
-            System.out.println(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

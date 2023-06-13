@@ -10,6 +10,7 @@
           :rows="rows"
           :select-options="{ enabled: true }"
           :search-options="{ enabled: true }"
+          :pagination-options="{ enabled: true }"
       >
         <template #selected-row-actions>
           <v-btn
@@ -37,6 +38,8 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: "ScheduleTable",
   data() {
@@ -44,15 +47,15 @@ export default {
       columns: [
         {
           label: 'Teacher',
-          field: 'teacher',
+          field: 'teacher.name',
         },
         {
           label: 'Discipline',
-          field: 'discipline',
+          field: 'discipline.name',
         },
         {
           label: 'Group',
-          field: 'group',
+          field: 'group.name',
         },
         {
           label: 'Time',
@@ -63,97 +66,43 @@ export default {
           field: 'classroom',
         },
       ],
-      rows: [
-        {
-          id: 1,
-          name: "schedule name",
-          teacher: "Yurash Bohdan",
-          teacher_id: "1",
-          discipline: "OS",
-          discipline_id: "1",
-          group: "IA-11",
-          group_id: "1",
-          time: "12:20 - 14:05",
-          classroom: "256"
-        },
-        {
-          id: 1,
-          name: "schedule name",
-          teacher: "Yurash Bohdan",
-          discipline: "OS",
-          group: "IA-11",
-          time: "12:20 - 14:05",
-          classroom: "256",
-          teacher_id: "1",
-          discipline_id: "1",
-          group_id: "1",
-        },
-        {
-          id: 1,
-          name: "schedule name",
-          teacher: "Yurash Bohdan",
-          discipline: "OS",
-          group: "IA-11",
-          time: "12:20 - 14:05",
-          classroom: "256",
-          teacher_id: "1",
-          discipline_id: "1",
-          group_id: "1",
-        },
-        {
-          id: 1,
-          name: "schedule name",
-          teacher: "Yurash Bohdan",
-          discipline: "OS",
-          group: "IA-11",
-          time: "12:20 - 14:05",
-          classroom: "256",
-          teacher_id: "1",
-          discipline_id: "1",
-          group_id: "1",
-        },
-        {
-          id: 1,
-          name: "schedule name",
-          teacher: "Yurash Bohdan",
-          discipline: "OS",
-          group: "IA-11",
-          time: "12:20 - 14:05",
-          classroom: "256",
-          teacher_id: "1",
-          discipline_id: "1",
-          group_id: "1",
-        }
-      ],
+      rows: [],
     }
   },
   methods: {
     deleteItem() {
+      let selected_ids = Array.from(this.$refs['table'].selectedRows).map(item => item.id);
 
+      const params = new URLSearchParams();
+      selected_ids.forEach(id => params.append('ids', id))
+
+      axios.delete("/api/schedules?" + params.toString())
+          .then(request => {
+            request.status === 200 ? this.$router.push({name: "successPage"}) : console.log(request);
+            request.status === 500 ? this.$router.push({name: "serverErrorPage"}) : console.log(request);
+          }).catch(e => {
+        e.response.status === 405 ? this.$router.push({name: "methodNotAllowed"}) : this.$router.push({name: "serverErrorPage"});
+      })
     },
     changeItem() {
       let selected = this.$refs['table'].selectedRows[0];
       let id = selected.id;
-      let teacher_id = selected.teacher_id;
-      let discipline_id = selected.discipline_id;
-      let group_id = selected.group_id;
-      let time = selected.time;
-      let classroom = selected.classroom;
-
 
       this.$router.push({
         name: "updateSchedule",
         params: {id: id},
-        query: {
-          id: id,
-          teacher_id: teacher_id,
-          discipline_id: discipline_id,
-          group_id,
-          time: time,
-          classroom: classroom
-        },
       })
     },
+  },
+  mounted() {
+    axios.get("/api/schedules")
+        .then(response => {
+          this.rows = response.data;
+        })
+        .catch(e => {
+          console.log(e)
+          this.$router.push({name: "serverErrorPage"})
+        })
   }
 }
 </script>

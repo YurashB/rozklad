@@ -19,6 +19,7 @@ import ScheduleForm from "@/components/entities/schedule/ScheduleForm";
 import SuccessPage from "@/components/results/SuccessPage";
 import NotFoundPage from "@/components/results/NotFoundPage";
 import InternalServerErrorPage from "@/components/results/InternalServerErrorPage";
+import MethodNotAllowed from "@/components/results/MethodNotAllowed";
 
 export default createRouter({
     history: createWebHistory(),
@@ -152,6 +153,11 @@ export default createRouter({
         {
             path: "/test",
             component: Test,
+        },
+        {
+            path: "/method-error",
+            component: MethodNotAllowed,
+            name: "methodNotAllowed"
         },
         {
             path: "/server-error",

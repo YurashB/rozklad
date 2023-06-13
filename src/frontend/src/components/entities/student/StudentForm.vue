@@ -12,6 +12,7 @@
             :rules="nameRules"
             label="Name of teacher"
             type="text"
+            counter="20"
         >
         </v-text-field>
         <v-text-field
@@ -21,6 +22,7 @@
             :rules="emailRules"
             label="Email of teacher"
             type="email"
+            counter="128"
         >
         </v-text-field>
         <v-text-field
@@ -32,6 +34,7 @@
             :rules="phoneRules"
             label="Phone of teacher"
             type="tel"
+            counter="16"
         >
         </v-text-field>
         <v-autocomplete
@@ -59,7 +62,7 @@
             color="green"
             variant="elevated"
             :disabled=!valid
-            @click="add"
+            @click="add($event)"
         >Add
         </v-btn>
       </v-form>
@@ -69,16 +72,17 @@
 
 <script>
 import {mask} from 'vue-the-mask'
+import axios from "axios";
 
 export default {
   data() {
     return {
       valid: false,
-      headerTitle: this.$route.query.id ? "Change student" : "Add new student",
-      nameRules: [v => !!v || 'Name is required',
-        v => /^[А-ЩЬЮЯҐЄІЇа-щьюяґєії ]+$/.test(v) || "Only letters are required"],
+      headerTitle: this.$route.params.id ? "Change student" : "Add new student",
+      nameRules: [v => !!v || 'Name is required',   v => v.length <= 20 || 'Max characters entered'],
       emailRules: [
         v => !!v || 'Email is required',
+        v => v.length <= 128 || 'Max characters entered',
         v => /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(v) || " Invalid email entered"
       ],
       phoneRules: [
@@ -89,18 +93,13 @@ export default {
         v => !!v || 'Group is required',
       ],
       student: {
-        id: this.$route.query.id,
-        name: this.$route.query.name,
-        email: this.$route.query.email,
-        phone: this.$route.query.phone,
-        group_id: this.$route.query.group_id
+        id: this.$route.params.id,
+        name: "",
+        email: "",
+        phone: "",
+        group_id: ""
       },
-      groups: [
-        {id: "1", name: "IA-11"},
-        {id: "2", name: "IA-12"},
-        {id: "3", name: "IК-11"},
-        {id: "4", name: "IC-14"}
-      ]
+      groups: []
     }
   },
   directives: {
@@ -108,11 +107,70 @@ export default {
   },
   methods: {
     change() {
+      const routeId = this.$route.params.id;
 
+      const params = new URLSearchParams();
+      params.append('name', this.student.name);
+      params.append('email', this.student.email);
+      params.append('phone', this.student.phone);
+      params.append('group_id', this.student.group_id);
+
+      if (routeId) {
+        axios.put("/api/students/" + routeId, params)
+            .then(response => {
+              response.status === 200 ? this.$router.push({name: "successPage"}) : console.log(response);
+            }).catch(e => {
+          e.request.status === 500 ? this.$router.push({name: "serverErrorPage"}) : console.log(e);
+        })
+      }
     },
-    add() {
+    add(event) {
+      event.preventDefault();
+      axios.post("/api/students", {
+        name: this.student.name,
+        email: this.student.email,
+        phone: this.student.phone,
+        group_id: this.student.group_id
+      })
+          .then(response => {
+            response.status === 200 ? this.$router.push({name: "successPage"}) : console.log(response);
+          }).catch(e => {
+        console.log(e)
+        e.request.status === 500 ? this.$router.push({name: "serverErrorPage"}) : console.log(e);
+      })
+    }
+  },
+  mounted() {
+    const routeId = this.$route.params.id;
+
+    if (routeId) {
+      axios.get("/api/students/" + routeId, {
+        params: {
+          id: routeId
+        }
+      })
+          .then(response => {
+            console.log(response)
+            this.student.name = response.data.name;
+            this.student.email = response.data.email;
+            this.student.phone = response.data.phone;
+            this.student.group_id = response.data.group.id;
+          })
+          .catch(e => {
+            e.request.status === 404 ? this.$router.push({name: "notFound"}) : "";
+            e.request.status === 500 ? this.$router.push({name: "serverErrorPage"}) : console.log(e);
+          });
 
     }
+
+    axios.get("/api/groups")
+        .then(response => {
+          this.groups = response.data;
+        })
+        .catch(e => {
+          console.log(e)
+          this.$router.push({name: "serverErrorPage"})
+        })
   }
 }
 </script>

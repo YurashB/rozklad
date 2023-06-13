@@ -13,22 +13,24 @@
             hint="Format: 12:20 - 14:05"
             label="Time of schedule"
             type="text"
+            counter="13"
         >
         </v-text-field>
         <v-text-field
             class="text-field-m-p"
             variant="outlined"
             v-model="this.schedule.classroom"
-            :rules="nameRules"
+            :rules="classroomRules"
             label="Classroom of schedule"
             type="text"
+            counter="10"
         >
         </v-text-field>
         <v-autocomplete
             label="Teacher"
             v-model="this.schedule.teacher_id"
             :items="teachers"
-            item-title="name"
+            :item-title="getTeacherTitle"
             item-value="id"
             variant="solo"
             :rules="selectRules"
@@ -67,7 +69,7 @@
             color="green"
             variant="elevated"
             :disabled=!valid
-            @click="add"
+            @click="add($event)"
         >Add
         </v-btn>
       </v-form>
@@ -76,74 +78,126 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   data() {
     return {
       valid: false,
-      headerTitle: this.$route.query.id ? "Change schedule" : "Add new schedule",
-      nameRules: [v => !!v || 'Name is required',
-        v => /^[А-ЩЬЮЯҐЄІЇа-щьюяґєії ]+$/.test(v) || "Only letters are required"],
+      headerTitle: this.$route.params.id ? "Change schedule" : "Add new schedule",
+      classroomRules: [v => !!v || 'Name is required',   v => v.length <= 10 || 'Max characters entered'],
       timeRules: [
         v => !!v || 'Time is required',
-        v => this.isTimeHaveCorrectFormat(v) || "Invalid time entered"
-      ],
-      emailRules: [
-        v => !!v || 'Email is required',
-        v => /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(v) || " Invalid email entered"
+        v => v.length <= 13 || 'Max characters entered',
+        v => /[0-9 -:]+$/.test(v) || "Invalid time entered"
       ],
       selectRules: [
         v => !!v || 'Is required',
       ],
       schedule: {
-        id: this.$route.query.id,
-        teacher_id: this.$route.query.teacher_id,
-        discipline_id: this.$route.query.discipline_id,
-        group_id: this.$route.query.group_id,
-        time: this.$route.query.time,
-        classroom: this.$route.query.classroom
+        id: this.$route.params.id,
+        teacher_id: "",
+        discipline_id: "",
+        group_id: "",
+        time: "",
+        classroom: ""
       },
-      groups: [
-        {id: "1", name: "IA-11"},
-        {id: "2", name: "IA-12"},
-        {id: "3", name: "IК-11"},
-        {id: "4", name: "IC-14"}
-      ],
-      disciplines: [
-        {id: "1", name: "English"},
-        {id: "2", name: "Web development"},
-        {id: "3", name: "OS"},
-        {id: "4", name: "Front-end"},
-        {id: "5", name: "Math"},
-      ],
-      teachers: [
-        {id: "1", name: "Gisselle Turner"},
-        {id: "2", name: "Dereck Wehner"},
-        {id: "3", name: "Rollin Johnson"},
-        {id: "4", name: "Gisselle Kunze"},
-        {id: "5", name: "Toy Friesen"},
-      ]
+      groups: [],
+      disciplines: [],
+      teachers: []
     }
   },
   methods: {
-    isTimeHaveCorrectFormat(time) {
-      //12:20 - 14:05
-      const timeArray = Array.from(time);
-      return !(timeArray.length === 13 &&
-          Number.isInteger(timeArray[0]) &&
-          Number.isInteger(timeArray[1]) &&
-          Number.isInteger(timeArray[4]) &&
-          Number.isInteger(timeArray[5]) &&
-          Number.isInteger(timeArray[8]) &&
-          Number.isInteger(timeArray[9]) &&
-          Number.isInteger(timeArray[11]) &&
-          Number.isInteger(timeArray[12]));
+    getTeacherTitle(teacher){
+      console.log(teacher)
+      return teacher !== "" ? `${teacher.surname} ${teacher.name}`: ``
     },
     change() {
+      const routeId = this.$route.params.id;
 
+      const params = new URLSearchParams();
+      params.append('time', this.schedule.time);
+      params.append('classroom', this.schedule.classroom);
+      params.append('teacher_id', this.schedule.teacher_id);
+      params.append('group_id', this.schedule.group_id);
+      params.append('discipline_id', this.schedule.discipline_id);
+
+      if (routeId) {
+        axios.put("/api/schedules/" + routeId, params)
+            .then(response => {
+              response.status === 200 ? this.$router.push({name: "successPage"}) : console.log(response);
+            }).catch(e => {
+          e.request.status === 500 ? this.$router.push({name: "serverErrorPage"}) : console.log(e);
+        })
+      }
     },
-    add() {
+    add(event) {
+      event.preventDefault();
+      axios.post("/api/schedules", {
+        time: this.schedule.time,
+        classroom: this.schedule.classroom,
+        teacher_id: this.schedule.teacher_id,
+        group_id: this.schedule.group_id,
+        discipline_id: this.schedule.discipline_id
+      })
+          .then(response => {
+            response.status === 200 ? this.$router.push({name: "successPage"}) : console.log(response);
+          }).catch(e => {
+        console.log(e)
+        e.request.status === 500 ? this.$router.push({name: "serverErrorPage"}) : console.log(e);
+      })
+    }
+  },
+  mounted() {
+    const routeId = this.$route.params.id;
+
+    if (routeId) {
+      axios.get("/api/schedules/" + routeId, {
+        params: {
+          id: routeId
+        }
+      })
+          .then(response => {
+            console.log(response)
+            this.schedule.time = response.data.time;
+            this.schedule.classroom = response.data.classroom;
+            this.schedule.teacher_id = response.data.teacher.id;
+            this.schedule.group_id = response.data.group.id;
+            this.schedule.discipline_id = response.data.discipline.id;
+          })
+          .catch(e => {
+            e.request.status === 404 ? this.$router.push({name: "notFound"}) : "";
+            e.request.status === 500 ? this.$router.push({name: "serverErrorPage"}) : console.log(e);
+          });
 
     }
+
+    axios.get("/api/groups")
+        .then(response => {
+          this.groups = response.data;
+        })
+        .catch(e => {
+          console.log(e)
+          this.$router.push({name: "serverErrorPage"})
+        })
+
+    axios.get("/api/teachers")
+        .then(response => {
+          this.teachers = response.data;
+        })
+        .catch(e => {
+          console.log(e)
+          this.$router.push({name: "serverErrorPage"})
+        })
+
+    axios.get("/api/disciplines")
+        .then(response => {
+          this.disciplines = response.data;
+        })
+        .catch(e => {
+          console.log(e)
+          this.$router.push({name: "serverErrorPage"})
+        })
   }
 }
 </script>

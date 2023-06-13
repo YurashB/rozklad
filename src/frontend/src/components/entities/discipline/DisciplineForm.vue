@@ -12,6 +12,7 @@
             :rules="nameRules"
             label="Name of discipline"
             type="text"
+            counter="64"
         >
         </v-text-field>
         <v-btn
@@ -47,6 +48,7 @@ export default {
       valid: false,
       nameRules: [
         v => !!v || 'Name is required',
+        v => v.length <= 64 || 'Max characters entered'
       ],
       discipline: {
         id: this.$route.params.id,

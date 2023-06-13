@@ -1,10 +1,9 @@
 <template>
   <div class="container">
     <div class="error">
-      <h1>500</h1>
-      <h2>error</h2>
-      <p>Ruh-roh, something just isn't right... Time to paw through your logs and get down and dirty in your
-        stack-trace;)</p>
+      <h1>Error</h1>
+      <h2>oops :(</h2>
+      <p>Ooh, something gone wrong. Maybe you want delete something that you can ;)</p>
     </div>
     <div class="stack-container">
       <div class="card-container">
@@ -116,6 +115,9 @@
 
 <script>
 export default {
-  name: "InternalServerErrorPage"
+  name: "MethodNotAlowed"
 }
 </script>
+
+<style scoped>
+</style>

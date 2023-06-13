@@ -10,6 +10,7 @@
           :rows="rows"
           :select-options="{ enabled: true }"
           :search-options="{ enabled: true }"
+          :pagination-options="{ enabled: true }"
       >
         <template #selected-row-actions>
           <v-btn
@@ -36,6 +37,8 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: "StudentTable",
   data() {
@@ -47,7 +50,7 @@ export default {
         },
         {
           label: 'Group',
-          field: 'group',
+          field: 'group.name',
         },
         {
           label: 'Email',
@@ -59,33 +62,43 @@ export default {
         },
       ],
       rows: [
-        {id: 1, name: "Gisselle", group: "IA-11", email: "аarchibald.fay@gmailll.org", phone: "050-623-6131", group_id: 1},
-        {id: 2, name: "Dereck", group: "IA-11", email: "аshyanne07@gasssmail.com", phone: "035-289-3199", group_id: 2},
-        {id: 3, name: "Rollin", group: "IC-12", email: "аkschulist@dailyladylog.com", phone: "035-289-3199", group_id: 3},
-        {id: 4, name: "Gisselle", group: "IT-14", email: "аgeovanny.tromp@curcuplas.me", phone: "035-289-3199", group_id: 2},
-        {id: 5, name: "Toy", group: "IT-12", email: "аalysa02@dailyladylog.com", phone: "035-289-3199", group_id: 1},
       ],
     }
   },
   methods: {
     deleteItem(){
+      let selected_ids = Array.from(this.$refs['table'].selectedRows).map(item => item.id);
 
+      const params = new URLSearchParams();
+      selected_ids.forEach(id => params.append('ids', id))
+
+      axios.delete("/api/students?" + params.toString())
+          .then(request => {
+            request.status === 200 ? this.$router.push({name: "successPage"}) : console.log(request);
+            request.status === 500 ? this.$router.push({name: "serverErrorPage"}) : console.log(request);
+          }).catch(e => {
+        e.response.status === 405 ? this.$router.push({name: "methodNotAllowed"}) : this.$router.push({name: "serverErrorPage"});
+      })
     },
     changeItem() {
       let selected = this.$refs['table'].selectedRows[0];
       let id = selected.id;
-      let name = selected.name;
-      let email = selected.email;
-      let phone = selected.phone;
-      let group_id = selected.group_id;
 
       this.$router.push({
         name: "updateStudent",
         params: {id: id},
-        query: {id: id, name: name, email: email, phone: phone, group_id: group_id},
       })
-
     }
+  },
+  mounted() {
+    axios.get("/api/students")
+        .then(response => {
+          this.rows = response.data;
+        })
+        .catch(e => {
+          console.log(e)
+          this.$router.push({name: "serverErrorPage"})
+        })
   }
 }
 </script>

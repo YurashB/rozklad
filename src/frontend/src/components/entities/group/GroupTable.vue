@@ -10,6 +10,7 @@
           :rows="rows"
           :select-options="{ enabled: true }"
           :search-options="{ enabled: true }"
+          :pagination-options="{ enabled: true }"
       >
         <template #selected-row-actions>
           <v-btn
@@ -36,6 +37,8 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: "GroupTable",
   data() {
@@ -47,7 +50,7 @@ export default {
         },
         {
           label: 'Department',
-          field: 'department',
+          field: 'department.shortName',
         },
         {
           label: 'Course',
@@ -56,31 +59,44 @@ export default {
         }
       ],
       rows: [
-        {id: 1, name: "Gisselle", department: "IST", course: 1, department_id: 1},
-        {id: 2, name: "Gisselle", department: "IST", course: 1, department_id: 2},
-        {id: 3, name: "Gisselle", department: "IST", course: 1, department_id: 3},
-        {id: 4, name: "Gisselle", department: "IST", course: 1, department_id: 1},
       ],
     }
   },
   methods: {
     deleteItem(){
+      let selected_ids = Array.from(this.$refs['table'].selectedRows).map(item => item.id);
 
+      const params = new URLSearchParams();
+      selected_ids.forEach(id => params.append('ids', id))
+
+      axios.delete("/api/groups?" + params.toString())
+          .then(request => {
+            request.status === 200 ? this.$router.push({name: "successPage"}) : console.log(request);
+            request.status === 500 ? this.$router.push({name: "serverErrorPage"}) : console.log(request);
+          }).catch(e => {
+        e.response.status === 405 ? this.$router.push({name: "methodNotAllowed"}) : this.$router.push({name: "serverErrorPage"});
+      })
     },
     changeItem() {
       let selected = this.$refs['table'].selectedRows[0];
       let id = selected.id;
-      let name = selected.name;
-      let course = selected.course;
-      let department_id = selected.department_id;
 
       this.$router.push({
         name: "updateGroup",
         params: {id: id},
-        query: {id: id, name: name, course: course, department_id: department_id},
       })
     }
-  }
+  },
+   mounted() {
+     axios.get("/api/groups")
+         .then(response => {
+           this.rows = response.data;
+         })
+         .catch(e => {
+           console.log(e)
+           this.$router.push({name: "serverErrorPage"})
+         })
+   }
 }
 </script>
 

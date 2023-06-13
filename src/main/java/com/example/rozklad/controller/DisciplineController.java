@@ -3,6 +3,7 @@ package com.example.rozklad.controller;
 import com.example.rozklad.domain.Discipline;
 import com.example.rozklad.exception.EntityNotFoundException;
 import com.example.rozklad.repository.DisciplineRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -79,6 +80,8 @@ public class DisciplineController {
         try {
             disciplineRepository.deleteAllById(Arrays.asList(ids));
             return new ResponseEntity<>(HttpStatus.OK);
+        } catch (DataIntegrityViolationException e) {
+            return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }

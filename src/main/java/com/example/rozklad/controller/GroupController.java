@@ -1,12 +1,9 @@
 package com.example.rozklad.controller;
 
-import com.example.rozklad.domain.Discipline;
-import com.example.rozklad.domain.Faculty;
-import com.example.rozklad.domain.Teacher;
+import com.example.rozklad.domain.Group;
 import com.example.rozklad.exception.EntityNotFoundException;
-import com.example.rozklad.repository.FacultyRepository;
-import com.example.rozklad.service.faculty.FacultyService;
-import org.springframework.beans.factory.annotation.Qualifier;
+import com.example.rozklad.repository.GroupRepository;
+import com.example.rozklad.service.group.GroupService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,28 +16,27 @@ import java.util.Map;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/api/faculties")
-public class FacultyController {
+@RequestMapping("/api/groups")
+public class GroupController {
 
-    private final FacultyService service;
-    private final FacultyRepository repository;
+    private final GroupService service;
+    private final GroupRepository repository;
 
-    public FacultyController(@Qualifier("facultyServiceImpl") FacultyService service, FacultyRepository repository) {
+    public GroupController(GroupService service, GroupRepository repository) {
         this.service = service;
         this.repository = repository;
     }
 
     @GetMapping
     @ResponseBody
-    public Iterable<Faculty> getAll() {
+    public Iterable<Group> getAll() {
         return repository.findAll();
     }
 
-
     @GetMapping("/{id}")
     @ResponseBody
-    public ResponseEntity<Faculty> getById(@PathVariable Long id) {
-        Optional<Faculty> searchedEntity = repository.findById(id);
+    public ResponseEntity<Group> getById(@PathVariable Long id) {
+        Optional<Group> searchedEntity = repository.findById(id);
 
         if (searchedEntity.isPresent()) {
             return new ResponseEntity<>(searchedEntity.get(), HttpStatus.OK);
@@ -51,7 +47,7 @@ public class FacultyController {
 
     @PostMapping
     @ResponseBody
-    public ResponseEntity<Faculty> save(@RequestBody Map<String, String> requestParam) {
+    public ResponseEntity<Group> save(@RequestBody Map<String, String> requestParam) {
         try {
             service.add(requestParam);
             return new ResponseEntity<>(HttpStatus.OK);
@@ -62,7 +58,7 @@ public class FacultyController {
 
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @ResponseBody
-    public ResponseEntity<Faculty> update(@PathVariable Long id, @RequestParam Map<String, String> requestParams) {
+    public ResponseEntity<Group> update(@PathVariable Long id, @RequestParam Map<String, String> requestParams) {
         try {
             service.update(id, requestParams);
 
@@ -77,7 +73,7 @@ public class FacultyController {
 
     @DeleteMapping
     @ResponseBody
-    public ResponseEntity<Faculty> delete(@RequestParam Long[] ids) {
+    public ResponseEntity<Group> delete(@RequestParam Long[] ids) {
         try {
             repository.deleteAllById(Arrays.asList(ids));
             return new ResponseEntity<>(HttpStatus.OK);
@@ -87,4 +83,5 @@ public class FacultyController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 }

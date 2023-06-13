@@ -12,6 +12,7 @@
             :rules="nameRules"
             label="Name of teacher"
             type="text"
+            counter="20"
         >
         </v-text-field>
         <v-text-field
@@ -21,6 +22,7 @@
             :rules="nameRules"
             label="Surname of teacher"
             type="text"
+            counter="20"
         >
         </v-text-field>
         <v-text-field
@@ -30,6 +32,7 @@
             :rules="emailRules"
             label="Email of teacher"
             type="email"
+            counter="128"
         >
         </v-text-field>
         <v-text-field
@@ -41,6 +44,7 @@
             :rules="phoneRules"
             label="Phone of teacher"
             type="tel"
+            counter="16"
         >
         </v-text-field>
         <v-btn
@@ -75,14 +79,16 @@ export default {
   data() {
     return {
       valid: false,
-      headerTitle: this.$route.query.id ? "Change teacher" : "Add new teacher",
-      nameRules: [v => !!v || 'Name is required',],
+      headerTitle: this.$route.params.id ? "Change teacher" : "Add new teacher",
+      nameRules: [v => !!v || 'Name is required',   v => v.length <= 20 || 'Max characters entered'],
       emailRules: [
         v => !!v || 'Email is required',
+        v => v.length <= 128 || 'Max characters entered',
         v => /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(v) || " Invalid email entered"
       ],
       phoneRules: [
         v => !!v || 'Phone is required',
+        v => v.length <= 16 || 'Max characters entered',
         v => v.length > 15 || "Invalid phone entered"
       ],
       teacher: {

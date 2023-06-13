@@ -12,6 +12,7 @@
             :rules="nameRules"
             label="Name of group"
             type="text"
+            counter="8"
         >
         </v-text-field>
         <v-text-field
@@ -27,7 +28,7 @@
             label="Departments"
             v-model="group.department_id"
             :items="departments"
-            item-title="name"
+            item-title="shortName"
             item-value="id"
             variant="solo"
             :rules="selectRules"
@@ -48,7 +49,7 @@
             color="green"
             variant="elevated"
             :disabled=!valid
-            @click="add"
+            @click="add($event)"
         >Add
         </v-btn>
       </v-form>
@@ -57,14 +58,18 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   data() {
     return {
       valid: false,
-      headerTitle: this.$route.query.id ? "Change group" : "Add new group",
+      headerTitle: this.$route.params.id ? "Change group" : "Add new group",
       nameRules: [
         v => !!v || 'Name is required',
+        v => v.length <= 8 || 'Max characters entered'
       ],
+
       courseRoles: [
         v => !!v || 'Name is required',
         v => v < 12 || "Too large number for course"
@@ -73,25 +78,76 @@ export default {
         v => !!v || 'Group is required',
       ],
       group: {
-        id: this.$route.query.id,
-        name: this.$route.query.name,
-        course: this.$route.query.course,
-        department_id: this.$route.query.department_id
+        id: this.$route.params.id,
+        name: "",
+        course: "",
+        department_id: ""
       },
-      departments: [
-        {id: "1", name: "IST"},
-        {id: "2", name: "SOI"},
-        {id: "3", name: "SLA"}
-      ]
+      departments: []
     }
   },
   methods: {
     change() {
+      const routeId = this.$route.params.id;
 
+      const params = new URLSearchParams();
+      params.append('name', this.group.name);
+      params.append('course', this.group.course);
+      params.append('department_id', this.group.department_id);
+
+      if (routeId) {
+        axios.put("/api/groups/" + routeId, params)
+            .then(response => {
+              response.status === 200 ? this.$router.push({name: "successPage"}) : console.log(response);
+            }).catch(e => {
+          e.request.status === 500 ? this.$router.push({name: "serverErrorPage"}) : console.log(e);
+        })
+      }
     },
-    add() {
+    add(event) {
+      event.preventDefault();
+      axios.post("/api/groups", {
+        name: this.group.name,
+        course: this.group.course,
+        department_id: this.group.department_id
+      })
+          .then(response => {
+            response.status === 200 ? this.$router.push({name: "successPage"}) : console.log(response);
+          }).catch(e => {
+        console.log(e)
+        e.request.status === 500 ? this.$router.push({name: "serverErrorPage"}) : console.log(e);
+      })
+    }
+  },
+  mounted() {
+    const routeId = this.$route.params.id;
+
+    if (routeId) {
+      axios.get("/api/groups/" + routeId, {
+        params: {
+          id: routeId
+        }
+      })
+          .then(response => {
+            this.group.name = response.data.name;
+            this.group.course = response.data.course;
+            this.group.department_id = response.data.department.id;
+          })
+          .catch(e => {
+            e.request.status === 404 ? this.$router.push({name: "notFound"}) : "";
+            e.request.status === 500 ? this.$router.push({name: "serverErrorPage"}) : console.log(e);
+          });
 
     }
+
+    axios.get("/api/departments")
+        .then(response => {
+          this.departments = response.data;
+        })
+        .catch(e => {
+          console.log(e)
+          this.$router.push({name: "serverErrorPage"})
+        })
   }
 }
 </script>
